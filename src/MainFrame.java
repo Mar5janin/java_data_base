@@ -5,7 +5,7 @@ import java.awt.*;
 public class MainFrame extends JFrame {
 
     private final DefaultTableModel recipeTableModel = new DefaultTableModel(
-        new String[]{"ID", "Nazwa", "Kategoria", "Czas (min)", "Porcje"}, 0
+            new String[]{"ID", "Nazwa", "Kategoria", "Czas (min)", "Porcje"}, 0
     ) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
@@ -17,21 +17,21 @@ public class MainFrame extends JFrame {
     private final JLabel detailInfoLabel = new JLabel(" ");
     private final JTextArea detailDescArea = new JTextArea(3, 30);
     private final DefaultTableModel detailIngModel = new DefaultTableModel(
-        new String[]{"Składnik", "Ilość", "Jednostka"}, 0
+            new String[]{"Składnik", "Ilość", "Jednostka"}, 0
     ) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable detailIngTable = new JTable(detailIngModel);
 
     private final DefaultTableModel ingTableModel = new DefaultTableModel(
-        new String[]{"ID", "Nazwa", "Jednostka"}, 0
+            new String[]{"ID", "Nazwa", "Jednostka"}, 0
     ) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable ingTable = new JTable(ingTableModel);
 
     private final DefaultTableModel catTableModel = new DefaultTableModel(
-        new String[]{"ID", "Nazwa"}, 0
+            new String[]{"ID", "Nazwa"}, 0
     ) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
@@ -90,13 +90,13 @@ public class MainFrame extends JFrame {
 
         recipeTable.setRowHeight(26);
         recipeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        hideColumn(recipeTable, 0); // ukryj kolumnę ID
         recipeTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        hideIdColumn(recipeTable);
 
         JPanel detailPanel = buildDetailPanel();
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-            new JScrollPane(recipeTable), detailPanel);
+                new JScrollPane(recipeTable), detailPanel);
         splitPane.setDividerLocation(480);
         splitPane.setResizeWeight(0.55);
 
@@ -135,8 +135,8 @@ public class MainFrame extends JFrame {
             int id = getSelectedId(recipeTable);
             if (id < 0) return;
             int confirm = JOptionPane.showConfirmDialog(this,
-                "Czy na pewno chcesz usunac ten przepis?", "Potwierdzenie",
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    "Czy na pewno chcesz usunac ten przepis?", "Potwierdzenie",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (confirm == JOptionPane.YES_OPTION) {
                 DatabaseHelper.deleteRecipe(id);
                 loadRecipes();
@@ -185,17 +185,17 @@ public class MainFrame extends JFrame {
 
         detailNameLabel.setText(r.getName());
         detailInfoLabel.setText(
-            (r.getCategory() != null ? r.getCategory().getName() : "-") +
-            "   |   Czas: " + r.getPrepTime() + " min" +
-            "   |   Porcje: " + r.getPortions()
+                (r.getCategory() != null ? r.getCategory().getName() : "-") +
+                        "   |   Czas: " + r.getPrepTime() + " min" +
+                        "   |   Porcje: " + r.getPortions()
         );
         detailDescArea.setText(r.getDescription());
 
         detailIngModel.setRowCount(0);
         for (RecipeIngredient ri : r.getIngredients()) {
             String qty = ri.getQuantity() % 1 == 0
-                ? String.valueOf((int) ri.getQuantity())
-                : String.valueOf(ri.getQuantity());
+                    ? String.valueOf((int) ri.getQuantity())
+                    : String.valueOf(ri.getQuantity());
             detailIngModel.addRow(new Object[]{ri.getIngredient().getName(), qty, ri.getUnit()});
         }
     }
@@ -207,15 +207,13 @@ public class MainFrame extends JFrame {
         detailIngModel.setRowCount(0);
     }
 
-    // ─────────────────────────── INGREDIENT PANEL ───────────────────────────
-
     private JPanel buildIngredientPanel() {
         JPanel panel = new JPanel(new BorderLayout(8, 8));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         ingTable.setRowHeight(26);
         ingTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        hideColumn(ingTable, 0);
+        hideIdColumn(ingTable);
 
         JButton addBtn    = makeButton("+ Dodaj", new Color(60, 140, 60));
         JButton editBtn   = makeButton("Edytuj",  new Color(30, 100, 180));
@@ -255,15 +253,13 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // ─────────────────────────── CATEGORY PANEL ───────────────────────────
-
     private JPanel buildCategoryPanel() {
         JPanel panel = new JPanel(new BorderLayout(8, 8));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         catTable.setRowHeight(26);
         catTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        hideColumn(catTable, 0);
+        hideIdColumn(catTable);
 
         JButton addBtn    = makeButton("+ Dodaj", new Color(60, 140, 60));
         JButton editBtn   = makeButton("Edytuj",  new Color(30, 100, 180));
@@ -303,16 +299,14 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    // ─────────────────────────── DATA LOADING ───────────────────────────
-
     private void loadRecipes() {
         recipeTableModel.setRowCount(0);
         for (Recipe r : DatabaseHelper.getAllRecipes()) {
             recipeTableModel.addRow(new Object[]{
-                r.getId(), r.getName(),
-                r.getCategory() != null ? r.getCategory().getName() : "-",
-                r.getPrepTime() > 0 ? r.getPrepTime() : "-",
-                r.getPortions() > 0 ? r.getPortions() : "-"
+                    r.getId(), r.getName(),
+                    r.getCategory() != null ? r.getCategory().getName() : "-",
+                    r.getPrepTime() > 0 ? r.getPrepTime() : "-",
+                    r.getPortions() > 0 ? r.getPortions() : "-"
             });
         }
     }
@@ -346,21 +340,21 @@ public class MainFrame extends JFrame {
         recipeTableModel.setRowCount(0);
         for (Recipe r : DatabaseHelper.searchRecipes(keyword, catId)) {
             recipeTableModel.addRow(new Object[]{
-                r.getId(), r.getName(),
-                r.getCategory() != null ? r.getCategory().getName() : "-",
-                r.getPrepTime() > 0 ? r.getPrepTime() : "-",
-                r.getPortions() > 0 ? r.getPortions() : "-"
+                    r.getId(), r.getName(),
+                    r.getCategory() != null ? r.getCategory().getName() : "-",
+                    r.getPrepTime() > 0 ? r.getPrepTime() : "-",
+                    r.getPortions() > 0 ? r.getPortions() : "-"
             });
         }
         clearDetails();
     }
 
-    // ─────────────────────────── HELPERS ───────────────────────────
-
-    private void hideColumn(JTable table, int col) {
-        table.getColumnModel().getColumn(col).setMaxWidth(0);
-        table.getColumnModel().getColumn(col).setMinWidth(0);
-        table.getColumnModel().getColumn(col).setWidth(0);
+    private void hideIdColumn(JTable table) {
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setPreferredWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
+        table.getColumnModel().getColumn(0).setResizable(false);
     }
 
     private int getSelectedId(JTable table) {

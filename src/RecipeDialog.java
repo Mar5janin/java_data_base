@@ -15,17 +15,16 @@ public class RecipeDialog extends JDialog {
     private final JComboBox<Ingredient> ingredientCombo = new JComboBox<>();
     private final JTextField quantityField    = new JTextField(6);
     private final JComboBox<String> unitCombo = new JComboBox<>(new String[]{
-        "g", "kg", "ml", "l", "szt.", "lyzka", "lyzeczka", "szklanka", "szczypta", "zabek", "plaster", "peczek"
+            "g", "kg", "ml", "l", "szt.", "lyzka", "lyzeczka", "szklanka", "szczypta", "zabek", "plaster", "peczek"
     });
 
     private final DefaultTableModel ingredientTableModel = new DefaultTableModel(
-        new String[]{"Skladnik", "Ilosc", "Jednostka"}, 0
+            new String[]{"Skladnik", "Ilosc", "Jednostka"}, 0
     ) {
         @Override public boolean isCellEditable(int row, int col) { return false; }
     };
     private final JTable ingredientTable = new JTable(ingredientTableModel);
 
-    // Lista skladnikow w tym przepisie (robocza kopia)
     private final List<RecipeIngredient> recipeIngredients = new ArrayList<>();
     private boolean saved = false;
     private Recipe recipe;
@@ -36,14 +35,13 @@ public class RecipeDialog extends JDialog {
 
         loadCategories();
         loadIngredients();
+        buildUI();
 
-        // WAZNE: najpierw zaladuj dane, potem buduj UI
         if (recipe != null) {
             fillForm(recipe);
         }
 
-        buildUI();
-        setSize(600, 640);
+        setSize(620, 660);
         setLocationRelativeTo(parent);
         setResizable(false);
     }
@@ -64,7 +62,6 @@ public class RecipeDialog extends JDialog {
         portionsField.setText(r.getPortions() > 0 ? String.valueOf(r.getPortions()) : "");
         descriptionArea.setText(r.getDescription() != null ? r.getDescription() : "");
 
-        // Ustaw kategorie
         if (r.getCategory() != null) {
             for (int i = 0; i < categoryCombo.getItemCount(); i++) {
                 if (categoryCombo.getItemAt(i).getId() == r.getCategory().getId()) {
@@ -74,17 +71,14 @@ public class RecipeDialog extends JDialog {
             }
         }
 
-        // Zaladuj skladniki z bazy (swieze pobieranie!)
         recipeIngredients.clear();
         ingredientTableModel.setRowCount(0);
-        List<RecipeIngredient> fromDb = DatabaseHelper.getRecipeIngredients(r.getId());
-        for (RecipeIngredient ri : fromDb) {
+        for (RecipeIngredient ri : DatabaseHelper.getRecipeIngredients(r.getId())) {
             recipeIngredients.add(ri);
-            String qty = ri.getQuantity() % 1 == 0
-                ? String.valueOf((int) ri.getQuantity())
-                : String.valueOf(ri.getQuantity());
             ingredientTableModel.addRow(new Object[]{
-                ri.getIngredient().getName(), qty, ri.getUnit()
+                    ri.getIngredient().getName(),
+                    formatQty(ri.getQuantity()),
+                    ri.getUnit()
             });
         }
     }
@@ -94,7 +88,6 @@ public class RecipeDialog extends JDialog {
         JPanel root = new JPanel(new BorderLayout(10, 10));
         root.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // ---- FORMULARZ GORNY ----
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createTitledBorder("Informacje o przepisie"));
         GridBagConstraints gbc = new GridBagConstraints();
@@ -128,7 +121,6 @@ public class RecipeDialog extends JDialog {
         descriptionArea.setWrapStyleWord(true);
         formPanel.add(new JScrollPane(descriptionArea), gbc);
 
-        // ---- PANEL SKLADNIKOW ----
         JPanel ingPanel = new JPanel(new BorderLayout(5, 5));
         ingPanel.setBorder(BorderFactory.createTitledBorder("Skladniki przepisu"));
 
@@ -137,7 +129,10 @@ public class RecipeDialog extends JDialog {
         JScrollPane tableScroll = new JScrollPane(ingredientTable);
         tableScroll.setPreferredSize(new Dimension(0, 140));
 
-        // Wiersz dodawania skladnika
+        ingredientTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) loadSelectedIngredientIntoForm();
+        });
+
         JPanel addIngRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 3));
         addIngRow.add(new JLabel("Skladnik:"));
         ingredientCombo.setPreferredSize(new Dimension(155, 25));
@@ -153,26 +148,33 @@ public class RecipeDialog extends JDialog {
         addIngBtn.setForeground(Color.WHITE);
         addIngBtn.setFocusPainted(false);
         addIngBtn.addActionListener(e -> addIngredientToList());
-        addIngRow.add(addIngBtn);
+
+        JButton updateIngBtn = new JButton("Zapisz zmiane");
+        updateIngBtn.setBackground(new Color(180, 120, 0));
+        updateIngBtn.setForeground(Color.WHITE);
+        updateIngBtn.setFocusPainted(false);
+        updateIngBtn.addActionListener(e -> updateSelectedIngredient());
 
         JButton removeIngBtn = new JButton("Usun");
         removeIngBtn.setBackground(new Color(200, 50, 50));
         removeIngBtn.setForeground(Color.WHITE);
         removeIngBtn.setFocusPainted(false);
         removeIngBtn.addActionListener(e -> removeIngredientFromList());
+
+        addIngRow.add(addIngBtn);
+        addIngRow.add(updateIngBtn);
         addIngRow.add(removeIngBtn);
 
         ingPanel.add(tableScroll, BorderLayout.CENTER);
         ingPanel.add(addIngRow,   BorderLayout.SOUTH);
 
-        // ---- PRZYCISKI DOLNE ----
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton saveBtn   = new JButton("Zapisz");
+        JButton saveBtn   = new JButton("Zapisz przepis");
         JButton cancelBtn = new JButton("Anuluj");
         saveBtn.setBackground(new Color(76, 153, 0));
         saveBtn.setForeground(Color.WHITE);
         saveBtn.setFocusPainted(false);
-        saveBtn.setPreferredSize(new Dimension(100, 30));
+        saveBtn.setPreferredSize(new Dimension(130, 30));
         saveBtn.addActionListener(e -> save());
         cancelBtn.addActionListener(e -> dispose());
         buttons.add(saveBtn);
@@ -185,6 +187,20 @@ public class RecipeDialog extends JDialog {
         root.add(topHalf, BorderLayout.CENTER);
         root.add(buttons, BorderLayout.SOUTH);
         add(root);
+    }
+
+    private void loadSelectedIngredientIntoForm() {
+        int row = ingredientTable.getSelectedRow();
+        if (row < 0) return;
+        RecipeIngredient ri = recipeIngredients.get(row);
+        for (int i = 0; i < ingredientCombo.getItemCount(); i++) {
+            if (ingredientCombo.getItemAt(i).getId() == ri.getIngredient().getId()) {
+                ingredientCombo.setSelectedIndex(i);
+                break;
+            }
+        }
+        quantityField.setText(formatQty(ri.getQuantity()));
+        unitCombo.setSelectedItem(ri.getUnit());
     }
 
     private void addIngredientToList() {
@@ -204,7 +220,6 @@ public class RecipeDialog extends JDialog {
             return;
         }
 
-        // Sprawdz czy skladnik juz jest na liscie
         for (RecipeIngredient ri : recipeIngredients) {
             if (ri.getIngredient().getId() == ing.getId()) {
                 JOptionPane.showMessageDialog(this, "Ten skladnik juz jest na liscie.", "Info", JOptionPane.INFORMATION_MESSAGE);
@@ -214,9 +229,49 @@ public class RecipeDialog extends JDialog {
 
         String unit = (String) unitCombo.getSelectedItem();
         recipeIngredients.add(new RecipeIngredient(ing, qty, unit));
-        String qtyStr = qty % 1 == 0 ? String.valueOf((int) qty) : String.valueOf(qty);
-        ingredientTableModel.addRow(new Object[]{ing.getName(), qtyStr, unit});
+        ingredientTableModel.addRow(new Object[]{ing.getName(), formatQty(qty), unit});
         quantityField.setText("");
+    }
+
+    private void updateSelectedIngredient() {
+        int row = ingredientTable.getSelectedRow();
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Zaznacz skladnik do edycji.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        Ingredient ing = (Ingredient) ingredientCombo.getSelectedItem();
+        if (ing == null) return;
+
+        String qtyText = quantityField.getText().trim();
+        if (qtyText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Podaj ilosc skladnika.", "Blad", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        double qty;
+        try {
+            qty = Double.parseDouble(qtyText.replace(",", "."));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Ilosc musi byc liczba.", "Blad", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        for (int i = 0; i < recipeIngredients.size(); i++) {
+            if (i != row && recipeIngredients.get(i).getIngredient().getId() == ing.getId()) {
+                JOptionPane.showMessageDialog(this, "Ten skladnik juz jest na liscie.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+        }
+
+        String unit = (String) unitCombo.getSelectedItem();
+        RecipeIngredient ri = recipeIngredients.get(row);
+        ri.setIngredient(ing);
+        ri.setQuantity(qty);
+        ri.setUnit(unit);
+
+        ingredientTableModel.setValueAt(ing.getName(), row, 0);
+        ingredientTableModel.setValueAt(formatQty(qty), row, 1);
+        ingredientTableModel.setValueAt(unit, row, 2);
     }
 
     private void removeIngredientFromList() {
@@ -259,6 +314,10 @@ public class RecipeDialog extends JDialog {
 
         saved = true;
         dispose();
+    }
+
+    private String formatQty(double qty) {
+        return qty % 1 == 0 ? String.valueOf((int) qty) : String.valueOf(qty);
     }
 
     public boolean isSaved() { return saved; }
