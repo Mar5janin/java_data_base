@@ -10,10 +10,6 @@ public class Recipe {
     private Category category;
     private List<RecipeIngredient> ingredients;
 
-    public Recipe() {
-        this.ingredients = new ArrayList<>();
-    }
-
     public Recipe(int id, String name, String description, int prepTime, int portions, Category category) {
         this.id = id;
         this.name = name;

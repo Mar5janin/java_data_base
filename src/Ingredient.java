@@ -3,8 +3,6 @@ public class Ingredient {
     private String name;
     private String unit;
 
-    public Ingredient() {}
-
     public Ingredient(int id, String name, String unit) {
         this.id = id;
         this.name = name;

@@ -307,16 +307,22 @@ public class RecipeDialog extends JDialog {
             return;
         }
 
-        if (recipe == null) recipe = new Recipe();
-        recipe.setName(name);
-        recipe.setDescription(descriptionArea.getText().trim());
-        recipe.setPrepTime(prepTime);
-        recipe.setPortions(portions);
-        recipe.setCategory((Category) categoryCombo.getSelectedItem());
-        recipe.setIngredients(recipeIngredients);
+        Category category = (Category) categoryCombo.getSelectedItem();
+        String description = descriptionArea.getText().trim();
 
-        if (recipe.getId() == 0) DatabaseHelper.insertRecipe(recipe);
-        else                     DatabaseHelper.updateRecipe(recipe);
+        if (recipe == null) {
+            recipe = new Recipe(0, name, description, prepTime, portions, category);
+            recipe.setIngredients(recipeIngredients);
+            DatabaseHelper.insertRecipe(recipe);
+        } else {
+            recipe.setName(name);
+            recipe.setDescription(description);
+            recipe.setPrepTime(prepTime);
+            recipe.setPortions(portions);
+            recipe.setCategory(category);
+            recipe.setIngredients(recipeIngredients);
+            DatabaseHelper.updateRecipe(recipe);
+        }
 
         saved = true;
         dispose();

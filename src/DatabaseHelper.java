@@ -278,7 +278,7 @@ public class DatabaseHelper {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Ingredient ing = new Ingredient(rs.getInt("ingredient_id"), rs.getString("name"), rs.getString("i_unit"));
-                list.add(new RecipeIngredient(recipeId, ing, rs.getDouble("quantity"), rs.getString("unit")));
+                list.add(new RecipeIngredient(ing, rs.getDouble("quantity"), rs.getString("unit")));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
